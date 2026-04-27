@@ -1,6 +1,8 @@
 # Build outputs
 bin/
 obj/
+release/
+LeaderboardWasm/release/
 
 # Visual Studio
 .vs/
