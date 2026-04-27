@@ -2,127 +2,175 @@
 
 <PageTitle>Leaderboard</PageTitle>
 
-<div class="leaderboard-shell">
-	<header class="leaderboard-header">
-		<h1>Leaderboard</h1>
-		<p>Top performers based on contributions and activity</p>
-	</header>
+<div class="page-scaffold">
+	<div class="leaderboard-shell">
+		<header class="leaderboard-header">
+			<h1>Leaderboard</h1>
+			<p>Top performers based on contributions and activity</p>
+		</header>
 
-	@if (!string.IsNullOrWhiteSpace(ErrorMessage))
-	{
-		<div class="status-card error">@ErrorMessage</div>
-	}
-	else if (IsLoading)
-	{
-		<div class="status-card">Loading leaderboard...</div>
-	}
-	else
-	{
-		<section class="filters-panel">
-			<input
-				class="text-input"
-				type="search"
-				placeholder="Search by name"
-				@bind="SearchQuery"
-				@bind:event="oninput" />
-
-			<select class="select-input" @bind="SelectedYear">
-				<option value="all">All Years</option>
-				@foreach (var year in AllYears)
-				{
-					<option value="@year.ToString()">@year</option>
-				}
-			</select>
-
-			<select class="select-input" @bind="SelectedQuarter">
-				<option value="all">All Quarters</option>
-				@foreach (var quarter in AllQuarters)
-				{
-					<option value="@quarter">@quarter</option>
-				}
-			</select>
-
-			<select class="select-input" @bind="SelectedCategory">
-				<option value="all">All Categories</option>
-				@foreach (var category in AllCategories)
-				{
-					<option value="@category">@category</option>
-				}
-			</select>
-
-			<select class="select-input" @bind="SelectedSort">
-				@foreach (var option in SortOptions)
-				{
-					<option value="@option.Key">@option.Label</option>
-				}
-			</select>
-		</section>
-
-		@if (FilteredLeaderboard.Count == 0)
+		@if (!string.IsNullOrWhiteSpace(ErrorMessage))
 		{
-			<div class="status-card">No activities found matching the current filters.</div>
+			<div class="status-card error">@ErrorMessage</div>
+		}
+		else if (IsLoading)
+		{
+			<div class="status-card">Loading leaderboard...</div>
 		}
 		else
 		{
-			<section class="podium-panel">
-				@foreach (var entry in FilteredLeaderboard.Take(3))
-				{
-					<article class="podium-card rank-@entry.Rank">
-						<div class="podium-rank">#@entry.Rank</div>
-						<div class="podium-avatar">@Initials(entry.Name)</div>
-						<h2>@entry.Name</h2>
-						<p>@entry.Title</p>
-						<strong>@entry.TotalPoints pts</strong>
-					</article>
-				}
+			<section class="filters-panel">
+				<select class="select-input" @bind="SelectedYear">
+					<option value="all">All Years</option>
+					@foreach (var year in AllYears)
+					{
+						<option value="@year.ToString()">@year</option>
+					}
+				</select>
+
+				<select class="select-input" @bind="SelectedQuarter">
+					<option value="all">All Quarters</option>
+					@foreach (var quarter in AllQuarters)
+					{
+						<option value="@quarter">@quarter</option>
+					}
+				</select>
+
+				<select class="select-input" @bind="SelectedCategory">
+					<option value="all">All Categories</option>
+					@foreach (var category in AllCategories)
+					{
+						<option value="@category">@category</option>
+					}
+				</select>
+
+				<input
+					class="text-input"
+					type="search"
+					placeholder="Search employee..."
+					@bind="SearchQuery"
+					@bind:event="oninput" />
 			</section>
 
-			<section class="list-panel">
-				@foreach (var entry in FilteredLeaderboard)
-				{
-					<article class="person-row">
-						<div class="person-main">
-							<span class="rank-pill">#@entry.Rank</span>
-							<div class="avatar">@Initials(entry.Name)</div>
-							<div class="person-meta">
-								<h3>@entry.Name</h3>
-								<p>@entry.Title</p>
-							</div>
-							<div class="points">@entry.TotalPoints pts</div>
-							<button class="toggle-button" type="button" @onclick="() => ToggleExpanded(entry.PersonId)">
-								@(ExpandedPeople.Contains(entry.PersonId) ? "Hide Details" : "View Details")
-							</button>
-						</div>
+			@if (FilteredLeaderboard.Count == 0)
+			{
+				<div class="status-card">No activities found matching the current filters.</div>
+			}
+			else
+			{
+				var first = GetTopAt(0);
+				var second = GetTopAt(1);
+				var third = GetTopAt(2);
 
-						@if (ExpandedPeople.Contains(entry.PersonId))
+				<section class="podium-panel">
+					<div class="podium-people">
+						@if (second is not null)
 						{
-							<div class="activities-wrap">
-								<table>
-									<thead>
-										<tr>
-											<th>Date</th>
-											<th>Category</th>
-											<th>Points</th>
-										</tr>
-									</thead>
-									<tbody>
-										@foreach (var activity in entry.Activities)
-										{
-											<tr>
-												<td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
-												<td><span class="category-chip">@activity.Category</span></td>
-												<td>@activity.Points</td>
-											</tr>
-										}
-									</tbody>
-								</table>
-							</div>
+							<article class="podium-person place-2">
+								<img class="profile-photo podium-photo" src="@second.PhotoUrl" alt="Profile illustration" />
+								<span class="medal med-2">2</span>
+								<h2>@second.Name</h2>
+								<p>@second.Title</p>
+								<div class="podium-points">@second.TotalPoints</div>
+							</article>
 						}
-					</article>
-				}
-			</section>
+
+						@if (first is not null)
+						{
+							<article class="podium-person place-1">
+								<img class="profile-photo podium-photo" src="@first.PhotoUrl" alt="Profile illustration" />
+								<span class="medal med-1">1</span>
+								<h2>@first.Name</h2>
+								<p>@first.Title</p>
+								<div class="podium-points">@first.TotalPoints</div>
+							</article>
+						}
+
+						@if (third is not null)
+						{
+							<article class="podium-person place-3">
+								<img class="profile-photo podium-photo" src="@third.PhotoUrl" alt="Profile illustration" />
+								<span class="medal med-3">3</span>
+								<h2>@third.Name</h2>
+								<p>@third.Title</p>
+								<div class="podium-points">@third.TotalPoints</div>
+							</article>
+						}
+					</div>
+
+					<div class="podium-steps">
+						<div class="step second">2</div>
+						<div class="step first">1</div>
+						<div class="step third">3</div>
+					</div>
+				</section>
+
+				<section class="list-panel">
+					@foreach (var entry in FilteredLeaderboard)
+					{
+						<article class="person-row @(ExpandedPeople.Contains(entry.PersonId) ? "expanded" : string.Empty)">
+							<div class="person-main">
+								<div class="rank-col">@entry.Rank</div>
+								<img class="profile-photo row-photo" src="@entry.PhotoUrl" alt="Profile illustration" />
+								<div class="person-meta">
+									<h3>@entry.Name</h3>
+									<p>@entry.Title</p>
+								</div>
+
+								<div class="mini-stats">
+									<div class="mini-stat">
+										<span class="mini-icon">▣</span>
+										<span>@entry.ActivityCount</span>
+									</div>
+									<div class="mini-stat">
+										<span class="mini-icon">◈</span>
+										<span>@entry.EducationCount</span>
+									</div>
+								</div>
+
+								<div class="points-block">
+									<div class="points-label">TOTAL</div>
+									<div class="points-value">★ @entry.TotalPoints</div>
+								</div>
+
+								<button class="toggle-button" type="button" aria-label="Toggle details" @onclick="() => ToggleExpanded(entry.PersonId)">
+									@(ExpandedPeople.Contains(entry.PersonId) ? "⌃" : "⌄")
+								</button>
+							</div>
+
+							@if (ExpandedPeople.Contains(entry.PersonId))
+							{
+								<div class="activities-wrap">
+									<h4>RECENT ACTIVITY</h4>
+									<table>
+										<thead>
+											<tr>
+												<th>ACTIVITY</th>
+												<th>CATEGORY</th>
+												<th>DATE</th>
+												<th class="align-right">POINTS</th>
+											</tr>
+										</thead>
+										<tbody>
+											@foreach (var activity in entry.Activities)
+											{
+												<tr>
+													<td>@activity.ActivityName</td>
+													<td><span class="category-chip">@activity.Category</span></td>
+													<td>@activity.ActivityDate.ToString("dd-MMM-yyyy")</td>
+													<td class="align-right">+@activity.Points</td>
+												</tr>
+											}
+										</tbody>
+									</table>
+								</div>
+							}
+						</article>
+					}
+				</section>
+			}
 		}
-	}
+	</div>
 </div>
 
 @code {
@@ -132,23 +180,20 @@
 	private string SelectedYear = "all";
 	private string SelectedQuarter = "all";
 	private string SelectedCategory = "all";
-	private string SelectedSort = "points_desc";
 
 	private bool IsLoading = true;
 	private string? ErrorMessage;
-
-	private static readonly List<SortChoice> SortOptions =
-	[
-		new("points_desc", "Points: High to Low"),
-		new("points_asc", "Points: Low to High"),
-		new("name_asc", "Name: A to Z")
-	];
 
 	private IReadOnlyList<int> AllYears => RawActivities.Select(x => x.Year).Distinct().OrderByDescending(x => x).ToList();
 
 	private IReadOnlyList<string> AllQuarters => RawActivities.Select(x => x.Quarter).Distinct().OrderBy(x => x).ToList();
 
 	private IReadOnlyList<string> AllCategories => RawActivities.Select(x => x.Category).Distinct().OrderBy(x => x).ToList();
+
+	private LeaderboardEntry? GetTopAt(int index)
+	{
+		return FilteredLeaderboard.Count > index ? FilteredLeaderboard[index] : null;
+	}
 
 	private List<LeaderboardEntry> FilteredLeaderboard
 	{
@@ -177,22 +222,20 @@
 			}
 
 			var aggregated = filtered
-				.GroupBy(x => new { x.PersonId, x.Name, x.Title })
+				.GroupBy(x => new { x.PersonId, x.Name, x.Title, x.PhotoUrl })
 				.Select(g => new LeaderboardEntry(
 					g.Key.PersonId,
 					g.Key.Name,
 					g.Key.Title,
+					g.Key.PhotoUrl,
 					g.Sum(x => x.Points),
+					g.Count(x => x.Category == "Public Speaking" || x.Category == "Innovation Challenge"),
+					g.Count(x => x.Category == "Education" || x.Category == "Mentor Support"),
 					g.OrderByDescending(x => x.ActivityDate).ToList(),
 					0))
 				.ToList();
 
-			aggregated = SelectedSort switch
-			{
-				"points_asc" => aggregated.OrderBy(x => x.TotalPoints).ThenBy(x => x.Name).ToList(),
-				"name_asc" => aggregated.OrderBy(x => x.Name).ThenByDescending(x => x.TotalPoints).ToList(),
-				_ => aggregated.OrderByDescending(x => x.TotalPoints).ThenBy(x => x.Name).ToList()
-			};
+			aggregated = aggregated.OrderByDescending(x => x.TotalPoints).ThenBy(x => x.Name).ToList();
 
 			for (var i = 0; i < aggregated.Count; i++)
 			{
@@ -227,64 +270,54 @@
 		}
 	}
 
-	private static string Initials(string fullName)
-	{
-		var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		return parts.Length switch
-		{
-			0 => "?",
-			1 => parts[0][0].ToString().ToUpperInvariant(),
-			_ => string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant()
-		};
-	}
-
 	private static List<ActivityItem> BuildSyntheticActivities()
 	{
 		return
 		[
-			new("p001", "Avery Quinn", "Learning Program Strategist", "Learning Session", new DateTime(2025, 1, 9), 15),
-			new("p001", "Avery Quinn", "Learning Program Strategist", "Knowledge Share", new DateTime(2025, 2, 12), 30),
-			new("p001", "Avery Quinn", "Learning Program Strategist", "Mentor Support", new DateTime(2025, 4, 3), 24),
-			new("p001", "Avery Quinn", "Learning Program Strategist", "Innovation Challenge", new DateTime(2024, 11, 20), 18),
+			new("p001", "Avery Quinn", "Principal Software Mentor (LT.U1.D1.G1)", "images/faces/face-1.svg", "[REG] Engineering Community Sync", "Public Speaking", new DateTime(2025, 5, 14), 64),
+			new("p001", "Avery Quinn", "Principal Software Mentor (LT.U1.D1.G1)", "images/faces/face-1.svg", "[LAB] Mentoring Studio A", "Education", new DateTime(2025, 4, 15), 64),
+			new("p001", "Avery Quinn", "Principal Software Mentor (LT.U1.D1.G1)", "images/faces/face-1.svg", "[LAB] Mentoring Studio B", "Education", new DateTime(2025, 4, 15), 64),
+			new("p001", "Avery Quinn", "Principal Software Mentor (LT.U1.D1.G1)", "images/faces/face-1.svg", "[LAB] Workshop Playbook", "Education", new DateTime(2025, 4, 14), 48),
+			new("p001", "Avery Quinn", "Principal Software Mentor (LT.U1.D1.G1)", "images/faces/face-1.svg", "[LAB] Test Design Bootcamp", "Education", new DateTime(2025, 4, 11), 40),
 
-			new("p002", "Jordan Vale", "Performance Coach", "Learning Session", new DateTime(2025, 1, 15), 10),
-			new("p002", "Jordan Vale", "Performance Coach", "Innovation Challenge", new DateTime(2025, 3, 10), 40),
-			new("p002", "Jordan Vale", "Performance Coach", "Knowledge Share", new DateTime(2025, 4, 18), 16),
-			new("p002", "Jordan Vale", "Performance Coach", "Mentor Support", new DateTime(2024, 12, 5), 12),
+			new("p002", "Jordan Vale", "Group Learning Manager (LT.U1.D1.G2)", "images/faces/face-2.svg", "[REG] Quality Practice Talk", "Public Speaking", new DateTime(2025, 5, 3), 56),
+			new("p002", "Jordan Vale", "Group Learning Manager (LT.U1.D1.G2)", "images/faces/face-2.svg", "[LAB] Peer Mentoring Hub", "Education", new DateTime(2025, 4, 22), 48),
+			new("p002", "Jordan Vale", "Group Learning Manager (LT.U1.D1.G2)", "images/faces/face-2.svg", "[LAB] Delivery Guild Session", "Education", new DateTime(2025, 4, 18), 44),
+			new("p002", "Jordan Vale", "Group Learning Manager (LT.U1.D1.G2)", "images/faces/face-2.svg", "[LAB] Advanced Testing Forum", "Education", new DateTime(2025, 3, 29), 36),
 
-			new("p003", "Riley Mercer", "Capability Advisor", "Learning Session", new DateTime(2025, 2, 2), 20),
-			new("p003", "Riley Mercer", "Capability Advisor", "Mentor Support", new DateTime(2025, 2, 21), 20),
-			new("p003", "Riley Mercer", "Capability Advisor", "Knowledge Share", new DateTime(2025, 5, 7), 22),
-			new("p003", "Riley Mercer", "Capability Advisor", "Innovation Challenge", new DateTime(2024, 10, 22), 16),
+			new("p003", "Riley Mercer", "Lead Quality Coach (LT.U1.D1.G3)", "images/faces/face-3.svg", "[REG] Architecture Learning Stream", "Public Speaking", new DateTime(2025, 5, 8), 50),
+			new("p003", "Riley Mercer", "Lead Quality Coach (LT.U1.D1.G3)", "images/faces/face-3.svg", "[LAB] Mentoring Cohort 1", "Education", new DateTime(2025, 4, 21), 44),
+			new("p003", "Riley Mercer", "Lead Quality Coach (LT.U1.D1.G3)", "images/faces/face-3.svg", "[LAB] Mentoring Cohort 2", "Education", new DateTime(2025, 4, 20), 44),
+			new("p003", "Riley Mercer", "Lead Quality Coach (LT.U1.D1.G3)", "images/faces/face-3.svg", "[LAB] Workshop Base 1", "Education", new DateTime(2025, 4, 14), 32),
 
-			new("p004", "Taylor Brooks", "Operations Learning Lead", "Innovation Challenge", new DateTime(2025, 1, 30), 35),
-			new("p004", "Taylor Brooks", "Operations Learning Lead", "Learning Session", new DateTime(2025, 3, 11), 18),
-			new("p004", "Taylor Brooks", "Operations Learning Lead", "Knowledge Share", new DateTime(2025, 4, 26), 12),
+			new("p004", "Taylor Brooks", "Senior Program Facilitator (LT.U1.D1.G4)", "images/faces/face-4.svg", "[REG] Product Discovery Seminar", "Public Speaking", new DateTime(2025, 5, 9), 46),
+			new("p004", "Taylor Brooks", "Senior Program Facilitator (LT.U1.D1.G4)", "images/faces/face-4.svg", "[LAB] Education Sprint", "Education", new DateTime(2025, 4, 16), 42),
+			new("p004", "Taylor Brooks", "Senior Program Facilitator (LT.U1.D1.G4)", "images/faces/face-4.svg", "[LAB] Practice Coaching", "Education", new DateTime(2025, 4, 14), 36),
 
-			new("p005", "Morgan Hale", "People Enablement Analyst", "Mentor Support", new DateTime(2025, 2, 16), 14),
-			new("p005", "Morgan Hale", "People Enablement Analyst", "Learning Session", new DateTime(2025, 3, 9), 12),
-			new("p005", "Morgan Hale", "People Enablement Analyst", "Knowledge Share", new DateTime(2025, 5, 1), 26),
+			new("p005", "Morgan Hale", "Learning Enablement Partner (LT.U1.D1.G5)", "images/faces/face-5.svg", "[REG] Team Communication Panel", "Public Speaking", new DateTime(2025, 5, 5), 34),
+			new("p005", "Morgan Hale", "Learning Enablement Partner (LT.U1.D1.G5)", "images/faces/face-5.svg", "[LAB] Coaching Ladder", "Education", new DateTime(2025, 4, 17), 30),
+			new("p005", "Morgan Hale", "Learning Enablement Partner (LT.U1.D1.G5)", "images/faces/face-5.svg", "[LAB] Knowledge Circle", "Education", new DateTime(2025, 4, 15), 26),
 
-			new("p006", "Casey North", "Growth Curriculum Designer", "Learning Session", new DateTime(2025, 2, 9), 17),
-			new("p006", "Casey North", "Growth Curriculum Designer", "Innovation Challenge", new DateTime(2025, 5, 3), 33),
-			new("p006", "Casey North", "Growth Curriculum Designer", "Mentor Support", new DateTime(2024, 9, 19), 9),
+			new("p006", "Casey North", "Curriculum Growth Designer (LT.U1.D1.G6)", "images/faces/face-6.svg", "[REG] Quality Systems Intro", "Public Speaking", new DateTime(2025, 5, 2), 32),
+			new("p006", "Casey North", "Curriculum Growth Designer (LT.U1.D1.G6)", "images/faces/face-6.svg", "[LAB] Course Design Session", "Education", new DateTime(2025, 4, 21), 28),
+			new("p006", "Casey North", "Curriculum Growth Designer (LT.U1.D1.G6)", "images/faces/face-6.svg", "[LAB] Deep Dive Advanced 1", "Education", new DateTime(2025, 4, 14), 24),
 
-			new("p007", "Skyler Finch", "Team Development Specialist", "Knowledge Share", new DateTime(2025, 1, 25), 21),
-			new("p007", "Skyler Finch", "Team Development Specialist", "Learning Session", new DateTime(2025, 3, 3), 11),
-			new("p007", "Skyler Finch", "Team Development Specialist", "Mentor Support", new DateTime(2025, 4, 14), 13),
+			new("p007", "Skyler Finch", "Team Development Specialist (LT.U1.D1.G7)", "images/faces/face-7.svg", "[REG] Team Practice Forum", "Public Speaking", new DateTime(2025, 5, 4), 26),
+			new("p007", "Skyler Finch", "Team Development Specialist (LT.U1.D1.G7)", "images/faces/face-7.svg", "[LAB] Learning Base 2", "Education", new DateTime(2025, 4, 18), 22),
+			new("p007", "Skyler Finch", "Team Development Specialist (LT.U1.D1.G7)", "images/faces/face-7.svg", "[LAB] Mentoring Pair Work", "Education", new DateTime(2025, 4, 13), 20),
 
-			new("p008", "Drew Sutton", "Learning Operations Partner", "Innovation Challenge", new DateTime(2025, 2, 7), 28),
-			new("p008", "Drew Sutton", "Learning Operations Partner", "Knowledge Share", new DateTime(2025, 5, 19), 19),
-			new("p008", "Drew Sutton", "Learning Operations Partner", "Learning Session", new DateTime(2024, 11, 8), 8)
+			new("p008", "Drew Sutton", "Learning Operations Analyst (LT.U1.D1.G8)", "images/faces/face-8.svg", "[REG] Process Knowledge Talk", "Public Speaking", new DateTime(2025, 5, 6), 25),
+			new("p008", "Drew Sutton", "Learning Operations Analyst (LT.U1.D1.G8)", "images/faces/face-8.svg", "[LAB] Test Workflow Practice", "Education", new DateTime(2025, 4, 16), 20),
+			new("p008", "Drew Sutton", "Learning Operations Analyst (LT.U1.D1.G8)", "images/faces/face-8.svg", "[LAB] Intro Workshop Base 1", "Education", new DateTime(2025, 4, 12), 18)
 		];
 	}
-
-	private sealed record SortChoice(string Key, string Label);
 
 	private sealed record ActivityItem(
 		string PersonId,
 		string Name,
 		string Title,
+		string PhotoUrl,
+		string ActivityName,
 		string Category,
 		DateTime ActivityDate,
 		int Points)
@@ -297,7 +330,10 @@
 		string PersonId,
 		string Name,
 		string Title,
+		string PhotoUrl,
 		int TotalPoints,
+		int ActivityCount,
+		int EducationCount,
 		List<ActivityItem> Activities,
 		int Rank);
 }
