@@ -44,12 +44,15 @@
 					}
 				</select>
 
-				<input
-					class="text-input"
-					type="search"
-					placeholder="Search employee..."
-					@bind="SearchQuery"
-					@bind:event="oninput" />
+				<div class="search-input-wrap">
+					<span class="search-glyph" aria-hidden="true">⌕</span>
+					<input
+						class="text-input"
+						type="search"
+						placeholder="Search employee..."
+						@bind="SearchQuery"
+						@bind:event="oninput" />
+				</div>
 			</section>
 
 			@if (FilteredLeaderboard.Count == 0)
@@ -71,7 +74,7 @@
 								<span class="medal med-2">2</span>
 								<h2>@second.Name</h2>
 								<p>@second.Title</p>
-								<div class="podium-points">@second.TotalPoints</div>
+								<div class="podium-points"><span class="star">★</span> @second.TotalPoints</div>
 							</article>
 						}
 
@@ -82,7 +85,7 @@
 								<span class="medal med-1">1</span>
 								<h2>@first.Name</h2>
 								<p>@first.Title</p>
-								<div class="podium-points">@first.TotalPoints</div>
+								<div class="podium-points"><span class="star">★</span> @first.TotalPoints</div>
 							</article>
 						}
 
@@ -93,7 +96,7 @@
 								<span class="medal med-3">3</span>
 								<h2>@third.Name</h2>
 								<p>@third.Title</p>
-								<div class="podium-points">@third.TotalPoints</div>
+								<div class="podium-points"><span class="star">★</span> @third.TotalPoints</div>
 							</article>
 						}
 					</div>
@@ -119,12 +122,8 @@
 
 								<div class="mini-stats">
 									<div class="mini-stat">
-										<span class="mini-icon">▣</span>
+										<span class="mini-icon">◫</span>
 										<span>@entry.ActivityCount</span>
-									</div>
-									<div class="mini-stat">
-										<span class="mini-icon">◈</span>
-										<span>@entry.EducationCount</span>
 									</div>
 								</div>
 
