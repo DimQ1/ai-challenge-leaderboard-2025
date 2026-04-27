@@ -66,45 +66,63 @@
 				var third = GetTopAt(2);
 
 				<section class="podium-panel">
-					<div class="podium-people">
+					<div class="podium-grid">
 						@if (second is not null)
 						{
-							<article class="podium-person place-2">
-								<img class="profile-photo podium-photo" src="@second.PhotoUrl" alt="Profile illustration" />
-								<span class="medal med-2">2</span>
-								<h2>@second.Name</h2>
-								<p>@second.Title</p>
-								<div class="podium-points"><span class="star">★</span> @second.TotalPoints</div>
-							</article>
+							<div class="podiumColumn podiumRank2">
+								<div class="podiumUser">
+									<div class="podiumAvatarContainer">
+										<img class="profile-photo podiumAvatar" src="@second.PhotoUrl" alt="Profile illustration" />
+										<div class="podiumRankBadge">2</div>
+									</div>
+									<h3 class="podiumName">@second.Name</h3>
+									<p class="podiumRole">@second.Title</p>
+									<div class="podiumScore"><span class="star">★</span><span>@second.TotalPoints</span></div>
+								</div>
+								<div class="podiumBlock">
+									<div class="podiumBlockTop"></div>
+									<span class="podiumRankNumber">2</span>
+								</div>
+							</div>
 						}
 
 						@if (first is not null)
 						{
-							<article class="podium-person place-1">
-								<img class="profile-photo podium-photo" src="@first.PhotoUrl" alt="Profile illustration" />
-								<span class="medal med-1">1</span>
-								<h2>@first.Name</h2>
-								<p>@first.Title</p>
-								<div class="podium-points"><span class="star">★</span> @first.TotalPoints</div>
-							</article>
+							<div class="podiumColumn podiumRank1">
+								<div class="podiumUser">
+									<div class="podiumAvatarContainer">
+										<img class="profile-photo podiumAvatar" src="@first.PhotoUrl" alt="Profile illustration" />
+										<div class="podiumRankBadge">1</div>
+									</div>
+									<h3 class="podiumName">@first.Name</h3>
+									<p class="podiumRole">@first.Title</p>
+									<div class="podiumScore"><span class="star">★</span><span>@first.TotalPoints</span></div>
+								</div>
+								<div class="podiumBlock">
+									<div class="podiumBlockTop"></div>
+									<span class="podiumRankNumber">1</span>
+								</div>
+							</div>
 						}
 
 						@if (third is not null)
 						{
-							<article class="podium-person place-3">
-								<img class="profile-photo podium-photo" src="@third.PhotoUrl" alt="Profile illustration" />
-								<span class="medal med-3">3</span>
-								<h2>@third.Name</h2>
-								<p>@third.Title</p>
-								<div class="podium-points"><span class="star">★</span> @third.TotalPoints</div>
-							</article>
+							<div class="podiumColumn podiumRank3">
+								<div class="podiumUser">
+									<div class="podiumAvatarContainer">
+										<img class="profile-photo podiumAvatar" src="@third.PhotoUrl" alt="Profile illustration" />
+										<div class="podiumRankBadge">3</div>
+									</div>
+									<h3 class="podiumName">@third.Name</h3>
+									<p class="podiumRole">@third.Title</p>
+									<div class="podiumScore"><span class="star">★</span><span>@third.TotalPoints</span></div>
+								</div>
+								<div class="podiumBlock">
+									<div class="podiumBlockTop"></div>
+									<span class="podiumRankNumber">3</span>
+								</div>
+							</div>
 						}
-					</div>
-
-					<div class="podium-steps">
-						<div class="step second">2</div>
-						<div class="step first">1</div>
-						<div class="step third">3</div>
 					</div>
 				</section>
 
