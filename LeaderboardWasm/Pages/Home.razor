@@ -1,0 +1,303 @@
+﻿@page "/"
+
+<PageTitle>Leaderboard</PageTitle>
+
+<div class="leaderboard-shell">
+	<header class="leaderboard-header">
+		<h1>Leaderboard</h1>
+		<p>Top performers based on contributions and activity</p>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+	{
+		<div class="status-card error">@ErrorMessage</div>
+	}
+	else if (IsLoading)
+	{
+		<div class="status-card">Loading leaderboard...</div>
+	}
+	else
+	{
+		<section class="filters-panel">
+			<input
+				class="text-input"
+				type="search"
+				placeholder="Search by name"
+				@bind="SearchQuery"
+				@bind:event="oninput" />
+
+			<select class="select-input" @bind="SelectedYear">
+				<option value="all">All Years</option>
+				@foreach (var year in AllYears)
+				{
+					<option value="@year.ToString()">@year</option>
+				}
+			</select>
+
+			<select class="select-input" @bind="SelectedQuarter">
+				<option value="all">All Quarters</option>
+				@foreach (var quarter in AllQuarters)
+				{
+					<option value="@quarter">@quarter</option>
+				}
+			</select>
+
+			<select class="select-input" @bind="SelectedCategory">
+				<option value="all">All Categories</option>
+				@foreach (var category in AllCategories)
+				{
+					<option value="@category">@category</option>
+				}
+			</select>
+
+			<select class="select-input" @bind="SelectedSort">
+				@foreach (var option in SortOptions)
+				{
+					<option value="@option.Key">@option.Label</option>
+				}
+			</select>
+		</section>
+
+		@if (FilteredLeaderboard.Count == 0)
+		{
+			<div class="status-card">No activities found matching the current filters.</div>
+		}
+		else
+		{
+			<section class="podium-panel">
+				@foreach (var entry in FilteredLeaderboard.Take(3))
+				{
+					<article class="podium-card rank-@entry.Rank">
+						<div class="podium-rank">#@entry.Rank</div>
+						<div class="podium-avatar">@Initials(entry.Name)</div>
+						<h2>@entry.Name</h2>
+						<p>@entry.Title</p>
+						<strong>@entry.TotalPoints pts</strong>
+					</article>
+				}
+			</section>
+
+			<section class="list-panel">
+				@foreach (var entry in FilteredLeaderboard)
+				{
+					<article class="person-row">
+						<div class="person-main">
+							<span class="rank-pill">#@entry.Rank</span>
+							<div class="avatar">@Initials(entry.Name)</div>
+							<div class="person-meta">
+								<h3>@entry.Name</h3>
+								<p>@entry.Title</p>
+							</div>
+							<div class="points">@entry.TotalPoints pts</div>
+							<button class="toggle-button" type="button" @onclick="() => ToggleExpanded(entry.PersonId)">
+								@(ExpandedPeople.Contains(entry.PersonId) ? "Hide Details" : "View Details")
+							</button>
+						</div>
+
+						@if (ExpandedPeople.Contains(entry.PersonId))
+						{
+							<div class="activities-wrap">
+								<table>
+									<thead>
+										<tr>
+											<th>Date</th>
+											<th>Category</th>
+											<th>Points</th>
+										</tr>
+									</thead>
+									<tbody>
+										@foreach (var activity in entry.Activities)
+										{
+											<tr>
+												<td>@activity.ActivityDate.ToString("yyyy-MM-dd")</td>
+												<td><span class="category-chip">@activity.Category</span></td>
+												<td>@activity.Points</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+					</article>
+				}
+			</section>
+		}
+	}
+</div>
+
+@code {
+	private readonly List<ActivityItem> RawActivities = BuildSyntheticActivities();
+	private readonly HashSet<string> ExpandedPeople = new();
+	private string SearchQuery = string.Empty;
+	private string SelectedYear = "all";
+	private string SelectedQuarter = "all";
+	private string SelectedCategory = "all";
+	private string SelectedSort = "points_desc";
+
+	private bool IsLoading = true;
+	private string? ErrorMessage;
+
+	private static readonly List<SortChoice> SortOptions =
+	[
+		new("points_desc", "Points: High to Low"),
+		new("points_asc", "Points: Low to High"),
+		new("name_asc", "Name: A to Z")
+	];
+
+	private IReadOnlyList<int> AllYears => RawActivities.Select(x => x.Year).Distinct().OrderByDescending(x => x).ToList();
+
+	private IReadOnlyList<string> AllQuarters => RawActivities.Select(x => x.Quarter).Distinct().OrderBy(x => x).ToList();
+
+	private IReadOnlyList<string> AllCategories => RawActivities.Select(x => x.Category).Distinct().OrderBy(x => x).ToList();
+
+	private List<LeaderboardEntry> FilteredLeaderboard
+	{
+		get
+		{
+			var filtered = RawActivities.AsEnumerable();
+
+			if (SelectedYear != "all" && int.TryParse(SelectedYear, out var year))
+			{
+				filtered = filtered.Where(x => x.Year == year);
+			}
+
+			if (SelectedQuarter != "all")
+			{
+				filtered = filtered.Where(x => x.Quarter == SelectedQuarter);
+			}
+
+			if (SelectedCategory != "all")
+			{
+				filtered = filtered.Where(x => x.Category == SelectedCategory);
+			}
+
+			if (!string.IsNullOrWhiteSpace(SearchQuery))
+			{
+				filtered = filtered.Where(x => x.Name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase));
+			}
+
+			var aggregated = filtered
+				.GroupBy(x => new { x.PersonId, x.Name, x.Title })
+				.Select(g => new LeaderboardEntry(
+					g.Key.PersonId,
+					g.Key.Name,
+					g.Key.Title,
+					g.Sum(x => x.Points),
+					g.OrderByDescending(x => x.ActivityDate).ToList(),
+					0))
+				.ToList();
+
+			aggregated = SelectedSort switch
+			{
+				"points_asc" => aggregated.OrderBy(x => x.TotalPoints).ThenBy(x => x.Name).ToList(),
+				"name_asc" => aggregated.OrderBy(x => x.Name).ThenByDescending(x => x.TotalPoints).ToList(),
+				_ => aggregated.OrderByDescending(x => x.TotalPoints).ThenBy(x => x.Name).ToList()
+			};
+
+			for (var i = 0; i < aggregated.Count; i++)
+			{
+				aggregated[i] = aggregated[i] with { Rank = i + 1 };
+			}
+
+			return aggregated;
+		}
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			await Task.Delay(350);
+		}
+		catch
+		{
+			ErrorMessage = "Error loading leaderboard data";
+		}
+		finally
+		{
+			IsLoading = false;
+		}
+	}
+
+	private void ToggleExpanded(string personId)
+	{
+		if (!ExpandedPeople.Add(personId))
+		{
+			ExpandedPeople.Remove(personId);
+		}
+	}
+
+	private static string Initials(string fullName)
+	{
+		var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		return parts.Length switch
+		{
+			0 => "?",
+			1 => parts[0][0].ToString().ToUpperInvariant(),
+			_ => string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant()
+		};
+	}
+
+	private static List<ActivityItem> BuildSyntheticActivities()
+	{
+		return
+		[
+			new("p001", "Avery Quinn", "Learning Program Strategist", "Learning Session", new DateTime(2025, 1, 9), 15),
+			new("p001", "Avery Quinn", "Learning Program Strategist", "Knowledge Share", new DateTime(2025, 2, 12), 30),
+			new("p001", "Avery Quinn", "Learning Program Strategist", "Mentor Support", new DateTime(2025, 4, 3), 24),
+			new("p001", "Avery Quinn", "Learning Program Strategist", "Innovation Challenge", new DateTime(2024, 11, 20), 18),
+
+			new("p002", "Jordan Vale", "Performance Coach", "Learning Session", new DateTime(2025, 1, 15), 10),
+			new("p002", "Jordan Vale", "Performance Coach", "Innovation Challenge", new DateTime(2025, 3, 10), 40),
+			new("p002", "Jordan Vale", "Performance Coach", "Knowledge Share", new DateTime(2025, 4, 18), 16),
+			new("p002", "Jordan Vale", "Performance Coach", "Mentor Support", new DateTime(2024, 12, 5), 12),
+
+			new("p003", "Riley Mercer", "Capability Advisor", "Learning Session", new DateTime(2025, 2, 2), 20),
+			new("p003", "Riley Mercer", "Capability Advisor", "Mentor Support", new DateTime(2025, 2, 21), 20),
+			new("p003", "Riley Mercer", "Capability Advisor", "Knowledge Share", new DateTime(2025, 5, 7), 22),
+			new("p003", "Riley Mercer", "Capability Advisor", "Innovation Challenge", new DateTime(2024, 10, 22), 16),
+
+			new("p004", "Taylor Brooks", "Operations Learning Lead", "Innovation Challenge", new DateTime(2025, 1, 30), 35),
+			new("p004", "Taylor Brooks", "Operations Learning Lead", "Learning Session", new DateTime(2025, 3, 11), 18),
+			new("p004", "Taylor Brooks", "Operations Learning Lead", "Knowledge Share", new DateTime(2025, 4, 26), 12),
+
+			new("p005", "Morgan Hale", "People Enablement Analyst", "Mentor Support", new DateTime(2025, 2, 16), 14),
+			new("p005", "Morgan Hale", "People Enablement Analyst", "Learning Session", new DateTime(2025, 3, 9), 12),
+			new("p005", "Morgan Hale", "People Enablement Analyst", "Knowledge Share", new DateTime(2025, 5, 1), 26),
+
+			new("p006", "Casey North", "Growth Curriculum Designer", "Learning Session", new DateTime(2025, 2, 9), 17),
+			new("p006", "Casey North", "Growth Curriculum Designer", "Innovation Challenge", new DateTime(2025, 5, 3), 33),
+			new("p006", "Casey North", "Growth Curriculum Designer", "Mentor Support", new DateTime(2024, 9, 19), 9),
+
+			new("p007", "Skyler Finch", "Team Development Specialist", "Knowledge Share", new DateTime(2025, 1, 25), 21),
+			new("p007", "Skyler Finch", "Team Development Specialist", "Learning Session", new DateTime(2025, 3, 3), 11),
+			new("p007", "Skyler Finch", "Team Development Specialist", "Mentor Support", new DateTime(2025, 4, 14), 13),
+
+			new("p008", "Drew Sutton", "Learning Operations Partner", "Innovation Challenge", new DateTime(2025, 2, 7), 28),
+			new("p008", "Drew Sutton", "Learning Operations Partner", "Knowledge Share", new DateTime(2025, 5, 19), 19),
+			new("p008", "Drew Sutton", "Learning Operations Partner", "Learning Session", new DateTime(2024, 11, 8), 8)
+		];
+	}
+
+	private sealed record SortChoice(string Key, string Label);
+
+	private sealed record ActivityItem(
+		string PersonId,
+		string Name,
+		string Title,
+		string Category,
+		DateTime ActivityDate,
+		int Points)
+	{
+		public int Year => ActivityDate.Year;
+		public string Quarter => $"Q{((ActivityDate.Month - 1) / 3) + 1}";
+	}
+
+	private sealed record LeaderboardEntry(
+		string PersonId,
+		string Name,
+		string Title,
+		int TotalPoints,
+		List<ActivityItem> Activities,
+		int Rank);
+}
